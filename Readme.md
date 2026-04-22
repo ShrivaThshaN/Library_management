@@ -3,7 +3,7 @@
 BookShelf is a clean, full-stack library management web app built with **Java + Javalin** on the backend and a lightweight **HTML / CSS / JavaScript** single-page frontend. It keeps track of your books, members, and lending activity with a calm green UI and an honest, no-nonsense workflow.
  
 > Built and maintained by **Shrivathshan**.
- 
+ Video Demo : https://drive.google.com/file/d/1z9WA8biIeUI83J3WfJA0CedHDDEnKTQR/view?usp=sharing
 ---
  
 ## ✨ Why BookShelf?
