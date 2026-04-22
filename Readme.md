@@ -5,12 +5,6 @@ It provides a real-world interface to manage books, users, and transactions with
 
 ---
 
-## 🎥 Demo
-
-Watch the working demo: https://drive.google.com/file/d/1mic6AD190Rmas4O49IwgHh61WsJitq33/view?usp=sharing
-
----
-
 ## 🚀 Features
 
 ### 📖 Book Management
@@ -171,17 +165,7 @@ http://localhost:7000
 
 ---
 
-## 🧪 Testing
 
-Manual testing includes:
-
-* Add book → verify in UI
-* Issue book → status changes
-* Return book → fine calculation
-* Search → results filter correctly
-* Transactions → all logs visible
-
----
 
 ## ⚠️ Configuration Note
 
@@ -200,7 +184,7 @@ Update in `DBUtil.java` if needed.
 
 ## 👨‍💻 Author
 
-Charan Reddy
+R S Shrivathshan
 ---
 
 ## ⭐ Final Note
