@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BookShelf — Library Management System</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="app">
+  <!-- Header -->
+  <div class="hdr">
+    <a class="logo" href="#" onclick="navigate('home');return false;">📚 Book<span>Shelf</span></a>
+    <div class="nav">
+      <a id="nav-home" class="act" onclick="navigate('home')">🏠 Dashboard</a>
+      <a id="nav-books" onclick="navigate('books')">📖 Books</a>
+      <a id="nav-members" onclick="navigate('members')">👥 Members</a>
+      <a id="nav-transactions" onclick="navigate('transactions')">🔄 Transactions</a>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="body">
+
+    <!-- DASHBOARD -->
+    <div id="page-home" class="page active">
+      <div class="pg">🏠 Dashboard</div>
+      <div class="stats">
+        <div class="sc"><div class="lbl">Total Books</div><div class="val" id="statTotalBooks">0</div></div>
+        <div class="sc"><div class="lbl">Total Members</div><div class="val" id="statMembers">0</div></div>
+        <div class="sc"><div class="lbl">Books Issued</div><div class="val" id="statIssued">0</div></div>
+        <div class="sc"><div class="lbl">Available Books</div><div class="val" id="statAvailable">0</div></div>
+      </div>
+      <div class="panel">
+        <div class="ptitle">📋 Recent Transactions</div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Book</th><th>Member</th><th>Issue Date</th><th>Return Date</th><th>Status</th></tr></thead>
+            <tbody id="recentTxnBody"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOOKS -->
+    <div id="page-books" class="page">
+      <div class="pg">📖 Book Management</div>
+      <div class="panel">
+        <div class="ptitle">➕ Add New Book</div>
+        <div class="frow-2">
+          <div class="fg"><label>TITLE *</label><input id="addTitle" placeholder="The Alchemist"></div>
+          <div class="fg"><label>AUTHOR *</label><input id="addAuthor" placeholder="Paulo Coelho"></div>
+          <div class="fg"><label>&nbsp;</label><button class="btn btn-p" onclick="addBook()">Add Book</button></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="ptitle">📚 All Books</div>
+        <div class="srow"><input id="searchInput" placeholder="Search by title or author…" oninput="handleSearch()"></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Title</th><th>Author</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="booksBody"><tr><td colspan="5" class="empty">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- MEMBERS -->
+    <div id="page-members" class="page">
+      <div class="pg">👥 Member Management</div>
+      <div class="panel">
+        <div class="ptitle">➕ Register Member</div>
+        <div class="frow-issue">
+          <div class="fg"><label>NAME *</label><input id="addUserName" placeholder="Shrivathshan"></div>
+          <div class="fg"><label>EMAIL</label><input id="addUserEmail" placeholder="shrivathshan@example.com"></div>
+          <div class="fg"><label>&nbsp;</label><button class="btn btn-p" onclick="addUser()">Register</button></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="ptitle">👤 All Members</div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Action</th></tr></thead>
+            <tbody id="usersBody"><tr><td colspan="4" class="empty">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRANSACTIONS -->
+    <div id="page-transactions" class="page">
+      <div class="pg">🔄 Issue &amp; Return</div>
+      <div class="panel">
+        <div class="ptitle">📤 Issue a Book</div>
+        <div class="frow-issue">
+          <div class="fg">
+            <label>SELECT BOOK *</label>
+            <select id="issueBookId"><option value="">Select an available book…</option></select>
+          </div>
+          <div class="fg">
+            <label>SELECT MEMBER *</label>
+            <select id="issueUserId"><option value="">Select a member…</option></select>
+          </div>
+          <div class="fg"><label>&nbsp;</label><button class="btn btn-a" onclick="issueBook()">Issue Book</button></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="ptitle">📋 All Transactions</div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Book</th><th>Member</th><th>Issue Date</th><th>Return Date</th><th>Fine</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="txnBody"><tr><td colspan="8" class="empty">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let allBooks=[], allUsers=[], allTxn=[], searchTimer=null;
+
+function navigate(p){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav a').forEach(x=>x.classList.remove('act'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.getElementById('nav-'+p).classList.add('act');
+  if(p==='home') loadDashboard();
+  if(p==='books') loadBooks();
+  if(p==='members') loadUsers();
+  if(p==='transactions') loadTxnPage();
+}
+
+function escapeHtml(s){return (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+function showToast(msg,type='info'){
+  const c=document.getElementById('toastContainer');
+  const t=document.createElement('div');
+  t.className='toast '+type;
+  t.innerHTML=`<span>${escapeHtml(msg)}</span><button class="x" onclick="this.parentElement.remove()">&times;</button>`;
+  c.appendChild(t);
+  setTimeout(()=>{t.style.animation='slideOut .25s ease forwards';setTimeout(()=>t.remove(),250);},3500);
+}
+
+async function apiGet(u){const r=await fetch(u);return JSON.parse(await r.text());}
+async function apiPost(u,d){const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});return JSON.parse(await r.text());}
+
+async function fetchAll(){
+  [allBooks, allUsers, allTxn] = await Promise.all([apiGet('/books'),apiGet('/users'),apiGet('/transactions')]);
+}
+
+async function loadDashboard(){
+  try{
+    await fetchAll();
+    const issued=allBooks.filter(b=>!b.available).length;
+    const avail=allBooks.filter(b=>b.available).length;
+    document.getElementById('statTotalBooks').textContent=allBooks.length;
+    document.getElementById('statMembers').textContent=allUsers.length;
+    document.getElementById('statIssued').textContent=issued;
+    document.getElementById('statAvailable').textContent=avail;
+    const tbody=document.getElementById('recentTxnBody');
+    const recent=allTxn.slice(0,10);
+    if(!recent.length){tbody.innerHTML='<tr><td colspan="6" class="empty">No transactions yet.</td></tr>';return;}
+    tbody.innerHTML=recent.map(t=>`<tr>
+      <td>${t.id}</td><td>${escapeHtml(t.bookTitle)}</td><td>${escapeHtml(t.userName)}</td>
+      <td>${t.issueDate||'—'}</td><td>${t.returnDate||'—'}</td>
+      <td><span class="badge ${t.status==='ISSUED'?'bi':'br'}">${t.status}</span></td>
+    </tr>`).join('');
+  }catch(e){showToast('Failed to load dashboard','error');}
+}
+
+async function loadBooks(){
+  try{
+    allBooks = await apiGet('/books');
+    renderBooks(allBooks);
+  }catch(e){showToast('Failed to load books','error');}
+}
+function renderBooks(list){
+  const tbody=document.getElementById('booksBody');
+  if(!list.length){tbody.innerHTML='<tr><td colspan="5" class="empty">No books found.</td></tr>';return;}
+  tbody.innerHTML=list.map(b=>`<tr>
+    <td>${b.id}</td><td><strong>${escapeHtml(b.title)}</strong></td><td>${escapeHtml(b.author)}</td>
+    <td><span class="badge ${b.available?'avail':'noavail'}">${b.available?'Available':'Issued'}</span></td>
+    <td><button class="btn btn-d" onclick="deleteBook(${b.id})" ${!b.available?'disabled title="Cannot delete: book is issued"':''}>Delete</button></td>
+  </tr>`).join('');
+}
+async function addBook(){
+  const title=document.getElementById('addTitle').value.trim();
+  const author=document.getElementById('addAuthor').value.trim();
+  if(!title||!author){showToast('Title and author are required','error');return;}
+  const r=await apiPost('/add-book',{title,author});
+  showToast(r.message, r.success?'info':'error');
+  if(r.success){document.getElementById('addTitle').value='';document.getElementById('addAuthor').value='';loadBooks();}
+}
+async function deleteBook(id){
+  if(!confirm('Delete this book?'))return;
+  const r=await apiGet('/delete-book?id='+id);
+  showToast(r.message, r.success?'info':'error');
+  if(r.success) loadBooks();
+}
+function handleSearch(){
+  clearTimeout(searchTimer);
+  const q=document.getElementById('searchInput').value.trim();
+  searchTimer=setTimeout(async()=>{
+    if(!q){renderBooks(allBooks);return;}
+    const list=await apiGet('/search?q='+encodeURIComponent(q));
+    renderBooks(list);
+  },220);
+}
+
+async function loadUsers(){
+  try{
+    allUsers = await apiGet('/users');
+    const tbody=document.getElementById('usersBody');
+    if(!allUsers.length){tbody.innerHTML='<tr><td colspan="4" class="empty">No members yet.</td></tr>';return;}
+    tbody.innerHTML=allUsers.map(u=>`<tr>
+      <td>${u.id}</td><td>${escapeHtml(u.name)}</td><td>${escapeHtml(u.email||'—')}</td>
+      <td><button class="btn btn-d" onclick="deleteUser(${u.id})">Delete</button></td>
+    </tr>`).join('');
+  }catch(e){showToast('Failed to load members','error');}
+}
+async function addUser(){
+  const name=document.getElementById('addUserName').value.trim();
+  const email=document.getElementById('addUserEmail').value.trim();
+  if(!name){showToast('Name is required','error');return;}
+  const r=await apiPost('/add-user',{name,email});
+  showToast(r.message, r.success?'info':'error');
+  if(r.success){document.getElementById('addUserName').value='';document.getElementById('addUserEmail').value='';loadUsers();}
+}
+async function deleteUser(id){
+  if(!confirm('Delete this member?'))return;
+  const r=await apiGet('/delete-user?id='+id);
+  showToast(r.message, r.success?'info':'error');
+  if(r.success) loadUsers();
+}
+
+async function loadTxnPage(){
+  try{
+    await fetchAll();
+    populateTxnDropdowns();
+    renderTxnTable();
+  }catch(e){showToast('Failed to load transactions','error');}
+}
+function populateTxnDropdowns(){
+  const bSel=document.getElementById('issueBookId');
+  bSel.innerHTML='<option value="">Select an available book…</option>'+
+    allBooks.filter(b=>b.available).map(b=>`<option value="${b.id}">${escapeHtml(b.title)} (ID: ${b.id})</option>`).join('');
+  const uSel=document.getElementById('issueUserId');
+  uSel.innerHTML='<option value="">Select a member…</option>'+
+    allUsers.map(u=>`<option value="${u.id}">${escapeHtml(u.name)} (ID: ${u.id})</option>`).join('');
+}
+function renderTxnTable(){
+  const tbody=document.getElementById('txnBody');
+  if(!allTxn.length){tbody.innerHTML='<tr><td colspan="8" class="empty">No transactions yet.</td></tr>';return;}
+  tbody.innerHTML=allTxn.map(t=>`<tr>
+    <td>${t.id}</td><td>${escapeHtml(t.bookTitle)}</td><td>${escapeHtml(t.userName)}</td>
+    <td>${t.issueDate||'—'}</td><td>${t.returnDate||'—'}</td>
+    <td>₹${(t.fine||0).toFixed(2)}</td>
+    <td><span class="badge ${t.status==='ISSUED'?'bi':'br'}">${t.status}</span></td>
+    <td>${t.status==='ISSUED'?`<button class="btn btn-r" onclick="returnBook(${t.userId},${t.bookId})">Return</button>`:'—'}</td>
+  </tr>`).join('');
+}
+async function issueBook(){
+  const bookId=parseInt(document.getElementById('issueBookId').value);
+  const userId=parseInt(document.getElementById('issueUserId').value);
+  if(!bookId||!userId){showToast('Select both a book and a member','error');return;}
+  const r=await apiPost('/issue-book',{userId,bookId});
+  showToast(r.message, r.success?'info':'error');
+  if(r.success) loadTxnPage();
+}
+async function returnBook(userId, bookId){
+  const r=await apiPost('/return-book',{userId,bookId});
+  showToast(r.message, r.success?'info':'error');
+  if(r.success) loadTxnPage();
+}
+
+loadDashboard();
+</script>
+</body>
+</html>
